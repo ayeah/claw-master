@@ -11,6 +11,7 @@ import db
 from services.auth import AuthService
 from api.users import setup_routes as setup_user_routes
 from api.roles import setup_routes as setup_role_routes
+from api.organization import setup_routes as setup_org_routes
 
 
 # 静态文件目录
@@ -256,6 +257,9 @@ def create_app():
     
     # 角色和权限管理 API
     setup_role_routes(app)
+    
+    # 组织架构管理 API
+    setup_org_routes(app)
     
     # 静态文件
     if STATIC_DIR.exists():
