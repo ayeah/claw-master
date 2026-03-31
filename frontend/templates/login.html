@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - OpenClaw</title>
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="logo">
+                    <svg viewBox="0 0 100 100" width="60" height="60">
+                        <circle cx="50" cy="50" r="45" fill="#4F46E5"/>
+                        <path d="M50 20 L60 40 L80 40 L65 55 L70 75 L50 65 L30 75 L35 55 L20 40 L40 40 Z" fill="white"/>
+                    </svg>
+                </div>
+                <h1>OpenClaw</h1>
+                <p>企业级管理平台</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="请输入用户名或邮箱"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="请输入密码"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+                
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember" id="remember">
+                        <span>记住我</span>
+                    </label>
+                    <a href="#" class="forgot-link">忘记密码？</a>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <span>登录</span>
+                    <svg class="loading-spinner" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="60" stroke-dashoffset="0">
+                            <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                        </circle>
+                    </svg>
+                </button>
+                
+                <div id="errorMessage" class="error-message"></div>
+            </form>
+            
+            <div class="login-footer">
+                <p>&copy; 2026 OpenClaw. All rights reserved.</p>
+            </div>
+        </div>
+        
+        <div class="login-background">
+            <div class="bg-shape shape-1"></div>
+            <div class="bg-shape shape-2"></div>
+            <div class="bg-shape shape-3"></div>
+        </div>
+    </div>
+    
+    <script src="/static/js/login.js"></script>
+</body>
+</html>
