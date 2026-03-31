@@ -9,9 +9,13 @@ from aiohttp import web
 import aiohttp_cors
 import db
 from services.auth import AuthService
+from services.provider_service import ProviderService
+from services.api_key_service import APIKeyService
 from api.users import setup_routes as setup_user_routes
 from api.roles import setup_routes as setup_role_routes
 from api.organization import setup_routes as setup_org_routes
+from api.providers import setup_routes as setup_provider_routes
+from api.api_keys import setup_routes as setup_api_key_routes
 
 
 # 静态文件目录
@@ -228,7 +232,15 @@ async def api_dashboard(request):
 async def on_startup(app):
     """应用启动时初始化"""
     await db.init_pool()
+    
+    # 初始化 API Gateway 服务
+    app['provider_service'] = ProviderService(app['db_pool'])
+    app['api_key_service'] = APIKeyService(app['db_pool'])
+    
     print("🚀 OpenClaw 应用启动")
+    print("📦 API Gateway 模块已加载")
+    print("   - Provider Service: 已初始化")
+    print("   - API Key Service: 已初始化")
 
 
 async def on_shutdown(app):
@@ -260,6 +272,10 @@ def create_app():
     
     # 组织架构管理 API
     setup_org_routes(app)
+    
+    # API Gateway 管理 API
+    setup_provider_routes(app)
+    setup_api_key_routes(app)
     
     # 静态文件
     if STATIC_DIR.exists():
