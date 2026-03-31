@@ -9,6 +9,8 @@ from aiohttp import web
 import aiohttp_cors
 import db
 from services.auth import AuthService
+from api.users import setup_routes as setup_user_routes
+from api.roles import setup_routes as setup_role_routes
 
 
 # 静态文件目录
@@ -248,6 +250,12 @@ def create_app():
     app.router.add_post('/api/logout', api_logout)
     app.router.add_get('/api/user', api_current_user)
     app.router.add_get('/api/dashboard', api_dashboard)
+    
+    # 用户管理 API
+    setup_user_routes(app)
+    
+    # 角色和权限管理 API
+    setup_role_routes(app)
     
     # 静态文件
     if STATIC_DIR.exists():
