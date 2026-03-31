@@ -1,0 +1,79 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 测试文件
+test_*.py
+test_*.js
+*_test.py
+*.test.js
+
+# 文档（不需要在容器中）
+*.md
+!requirements.txt
+DEPLOYMENT.md
+README.md
+
+# 部署脚本（不需要在容器中）
+build-and-deploy.py
+deploy-docker.py
+deploy-docker.sh
+deploy-to-github.sh
+github-deploy-quick.sh
+
+# Docker 配置（已经复制到镜像中）
+docker/
+
+# 日志和数据（运行时创建）
+logs/
+data/
+config/
+backups/
+
+# 数据库脚本（数据库是外部的）
+database/
+init_database.js
+migrate_org.js
+check_db.js
+check_database.py
+
+# 其他工具脚本
+docker_container_viewer.py
+docker_containers_report.md
+docker_socket_analysis.md
+
+# GitHub Deploy Key（安全）
+github_deploy_key
+github_deploy_key.pub
+
+# 虚拟环境
+.venv/
+venv/
+
+# 缓存
+.cache/
+*.egg-info/
+.pytest_cache/
+
+# 临时文件
+*.tmp
+*.log
+*.bak
