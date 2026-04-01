@@ -3,25 +3,25 @@
 claw-master Docker 镜像构建和部署脚本
 
 功能：
-1. 构建 claw-master 管理系统 Docker 镜像
-2. 部署到 Docker 容器
-3. 使用外部数据库连接
+1. 读取 VERSION 文件获取当前版本号
+2. 构建 claw-master-<VERSION> Docker 镜像
+3. 部署到 Docker 容器
+4. 使用外部数据库连接
 
 使用方式:
-  python3 build-and-deploy.py                    # 构建并部署
-  python3 build-and-deploy.py --build-only       # 仅构建
-  python3 build-and-deploy.py --deploy-only      # 仅部署
-  python3 build-and-deploy.py --image myimage    # 指定镜像名
-  python3 build-and-deploy.py --port 8080        # 指定端口
+  python3 tools/build-and-deploy.py                    # 构建并部署
+  python3 tools/build-and-deploy.py --build-only       # 仅构建
+  python3 tools/build-and-deploy.py --deploy-only      # 仅部署
+  python3 tools/build-and-deploy.py --port 38080       # 指定端口
 """
 
 import subprocess
 import sys
 import os
-import argparse
 import socket
 import http.client
 import json
+from pathlib import Path
 from datetime import datetime
 
 
@@ -30,9 +30,8 @@ from datetime import datetime
 # ============================================================================
 
 DOCKER_SOCKET = '/var/run/docker.sock'
-DEFAULT_IMAGE = 'claw-master:latest'
-DEFAULT_PORT = 18789
-DEFAULT_CONTAINER_NAME = 'claw-master-latest'
+DEFAULT_PORT = 38080
+HOST_IP = '10.10.1.100'
 
 # 数据库配置
 DB_CONFIG = {
@@ -44,7 +43,9 @@ DB_CONFIG = {
 }
 
 # 工作区路径
-WORKSPACE_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = Path(__file__).parent
+WORKSPACE_DIR = SCRIPT_DIR.parent
+VERSION_FILE = WORKSPACE_DIR / 'VERSION'
 
 
 # ============================================================================
@@ -65,21 +66,55 @@ def log_info(msg):
 
 
 def log_success(msg):
-    print(f"{Colors.GREEN}[SUCCESS]{Colors.NC} {msg}")
+    print(f"{Colors.GREEN}[✓]{Colors.NC} {msg}")
 
 
 def log_warning(msg):
-    print(f"{Colors.YELLOW}[WARNING]{Colors.NC} {msg}")
+    print(f"{Colors.YELLOW}[!]]{Colors.NC} {msg}")
 
 
 def log_error(msg):
-    print(f"{Colors.RED}[ERROR]{Colors.NC} {msg}")
+    print(f"{Colors.RED}[✗]{Colors.NC} {msg}")
 
 
 def log_step(msg):
     print(f"\n{Colors.CYAN}{'='*60}{Colors.NC}")
     print(f"{Colors.CYAN}{msg}{Colors.NC}")
     print(f"{Colors.CYAN}{'='*60}{Colors.NC}")
+
+
+# ============================================================================
+# 版本号管理
+# ============================================================================
+
+def read_version():
+    """从 VERSION 文件读取当前版本号"""
+    if not VERSION_FILE.exists():
+        log_warning("VERSION 文件不存在，使用默认版本 0.0.0")
+        return '0.0.0'
+    
+    content = VERSION_FILE.read_text()
+    for line in content.split('\n'):
+        if line.startswith('**当前版本：**'):
+            version = line.split('**当前版本：**')[1].strip()
+            log_success(f"读取版本号：{version}")
+            return version
+    
+    log_warning("无法从 VERSION 文件读取版本号，使用默认版本 0.0.0")
+    return '0.0.0'
+
+
+def generate_container_name(version):
+    """生成容器名称：claw-master-<VERSION>"""
+    # 清理版本号中的特殊字符
+    clean_version = version.replace(' ', '').replace('*', '')
+    return f"claw-master-{clean_version}"
+
+
+def generate_image_name(version):
+    """生成镜像名称：claw-master:<VERSION>"""
+    clean_version = version.replace(' ', '').replace('*', '')
+    return f"claw-master:{clean_version}"
 
 
 # ============================================================================
@@ -172,8 +207,8 @@ def check_prerequisites():
     ]
     
     for file in required_files:
-        path = os.path.join(WORKSPACE_DIR, file)
-        if not os.path.exists(path):
+        path = WORKSPACE_DIR / file
+        if not path.exists():
             log_error(f"缺少文件：{file}")
             return False, None
     
@@ -188,8 +223,8 @@ def build_image(image_name):
     cmd = [
         'docker', 'build',
         '-t', image_name,
-        '-f', os.path.join(WORKSPACE_DIR, 'Dockerfile'),
-        WORKSPACE_DIR
+        '-f', WORKSPACE_DIR / 'Dockerfile',
+        str(WORKSPACE_DIR)
     ]
     
     log_info(f"执行：{' '.join(cmd)}")
@@ -199,7 +234,8 @@ def build_image(image_name):
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            universal_newlines=True
+            universal_newlines=True,
+            cwd=str(WORKSPACE_DIR)
         )
         
         for line in process.stdout:
@@ -284,10 +320,16 @@ def create_and_start_container(client, container_name, image_name, port):
     ]
     
     # 构建卷挂载
+    host_data_dir = Path.home() / 'claw-master'
+    host_data_dir.mkdir(exist_ok=True)
+    (host_data_dir / 'logs').mkdir(exist_ok=True)
+    (host_data_dir / 'data').mkdir(exist_ok=True)
+    (host_data_dir / 'config').mkdir(exist_ok=True)
+    
     volumes = [
-        f"{os.path.join(WORKSPACE_DIR, 'logs')}:/app/logs",
-        f"{os.path.join(WORKSPACE_DIR, 'data')}:/app/data",
-        f"{os.path.join(WORKSPACE_DIR, 'config')}:/app/config"
+        f"{host_data_dir}/logs:/app/logs",
+        f"{host_data_dir}/data:/app/data",
+        f"{host_data_dir}/config:/app/config"
     ]
     
     # 创建容器配置
@@ -351,28 +393,35 @@ def verify_deployment(client, container_name, port):
     # 检查端口
     log_info(f"检查端口 {port}...")
     try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        # 简单检查，实际应该检查 HTTP
-        log_success(f"端口 {port} 已开放")
-    except:
-        log_warning(f"无法验证端口 {port}")
+        result = sock.connect_ex(('127.0.0.1', port))
+        sock.close()
+        if result == 0:
+            log_success(f"端口 {port} 已开放")
+        else:
+            log_warning(f"端口 {port} 无法连接")
+    except Exception as e:
+        log_warning(f"无法验证端口：{e}")
     
     return True
 
 
-def print_deployment_summary(container_name, image_name, port):
+def print_deployment_summary(container_name, image_name, version, port):
     """打印部署总结"""
     log_step("📊 部署总结")
+    
+    access_url = f"http://{HOST_IP}:{port}"
     
     print(f"""
 {Colors.GREEN}✅ 部署完成！{Colors.NC}
 
+  版本号：    {Colors.CYAN}{version}{Colors.NC}
   容器名称：  {Colors.CYAN}{container_name}{Colors.NC}
   镜像名称：  {Colors.CYAN}{image_name}{Colors.NC}
   访问端口：  {Colors.CYAN}{port}{Colors.NC}
   
-  访问地址：  {Colors.BLUE}http://localhost:{port}{Colors.NC}
+  访问地址：  {Colors.BLUE}{access_url}{Colors.NC}
   登录账号：  {Colors.YELLOW}admin / Admin@123{Colors.NC}
 
 {Colors.YELLOW}⚠️  首次登录后请立即修改密码！{Colors.NC}
@@ -391,17 +440,18 @@ def print_deployment_summary(container_name, image_name, port):
 # ============================================================================
 
 def main():
+    import argparse
+    
     parser = argparse.ArgumentParser(
         description='claw-master Docker 镜像构建和部署脚本',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  python3 build-and-deploy.py                    # 构建并部署
-  python3 build-and-deploy.py --build-only       # 仅构建镜像
-  python3 build-and-deploy.py --deploy-only      # 仅部署容器
-  python3 build-and-deploy.py --image my:tag     # 指定镜像名
-  python3 build-and-deploy.py --port 8080        # 指定端口
-  python3 build-and-deploy.py --name my-container # 指定容器名
+  python3 tools/build-and-deploy.py                    # 构建并部署
+  python3 tools/build-and-deploy.py --build-only       # 仅构建镜像
+  python3 tools/build-and-deploy.py --deploy-only      # 仅部署容器
+  python3 tools/build-and-deploy.py --port 38080       # 指定端口
+  python3 tools/build-and-deploy.py --rebuild          # 强制重建容器
         """
     )
     
@@ -409,24 +459,27 @@ def main():
                        help='仅构建镜像，不部署')
     parser.add_argument('--deploy-only', action='store_true',
                        help='仅部署容器，不构建镜像')
-    parser.add_argument('-i', '--image', default=DEFAULT_IMAGE,
-                       help=f'Docker 镜像名称 (默认：{DEFAULT_IMAGE})')
     parser.add_argument('-p', '--port', type=int, default=DEFAULT_PORT,
                        help=f'容器暴露端口 (默认：{DEFAULT_PORT})')
-    parser.add_argument('-n', '--name', default=None,
-                       help=f'容器名称 (默认：{DEFAULT_CONTAINER_NAME})')
     parser.add_argument('-r', '--rebuild', action='store_true',
                        help='强制重建容器')
     
     args = parser.parse_args()
     
-    container_name = args.name or DEFAULT_CONTAINER_NAME
+    # 读取版本号
+    version = read_version()
+    
+    # 生成容器和镜像名称
+    container_name = generate_container_name(version)
+    image_name = generate_image_name(version)
     
     log_step("🚀 claw-master 构建和部署脚本")
-    print(f"  工作区：{WORKSPACE_DIR}")
-    print(f"  镜像：{args.image}")
-    print(f"  容器：{container_name}")
-    print(f"  端口：{args.port}")
+    print(f"  工作区：   {WORKSPACE_DIR}")
+    print(f"  版本号：   {version}")
+    print(f"  镜像：     {image_name}")
+    print(f"  容器：     {container_name}")
+    print(f"  端口：     {args.port}")
+    print(f"  访问地址： http://{HOST_IP}:{args.port}")
     
     # 检查前置条件
     success, client = check_prerequisites()
@@ -435,7 +488,7 @@ def main():
     
     # 构建镜像
     if not args.deploy_only:
-        if not build_image(args.image):
+        if not build_image(image_name):
             log_error("镜像构建失败")
             sys.exit(1)
     
@@ -450,7 +503,7 @@ def main():
             log_error("停止/删除容器失败")
             sys.exit(1)
     
-    container_id = create_and_start_container(client, container_name, args.image, args.port)
+    container_id = create_and_start_container(client, container_name, image_name, args.port)
     if not container_id:
         log_error("创建/启动容器失败")
         sys.exit(1)
@@ -461,7 +514,7 @@ def main():
         sys.exit(1)
     
     # 打印总结
-    print_deployment_summary(container_name, args.image, args.port)
+    print_deployment_summary(container_name, image_name, version, args.port)
 
 
 if __name__ == '__main__':

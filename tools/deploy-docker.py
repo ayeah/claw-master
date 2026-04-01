@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """
-OpenClaw Docker 部署脚本
-将开发环境代码部署到宿主主机的 Docker 容器中
+claw-master Docker 部署脚本
 
-容器名称：claw-master-version
-数据库：postgresql://user_xKQftk:password_yP7FCG@postgresql:5432
-持久化存储：~/claw-master/
+功能：
+1. 从 VERSION 文件读取当前版本号
+2. 部署 claw-master-<VERSION> 容器
+3. 使用外部数据库连接
+4. 支持端口和宿主机 IP 配置
+
+使用方式:
+  python3 tools/deploy-docker.py                    # 部署当前版本
+  python3 tools/deploy-docker.py --port 38080       # 指定端口
+  python3 tools/deploy-docker.py --rebuild          # 强制重建
+  python3 tools/deploy-docker.py --skip-pull        # 跳过镜像拉取
 """
 
 import socket
@@ -14,6 +21,7 @@ import json
 import os
 import sys
 import argparse
+from pathlib import Path
 from datetime import datetime
 
 
@@ -22,27 +30,54 @@ from datetime import datetime
 # ============================================================================
 
 DOCKER_SOCKET = '/var/run/docker.sock'
-DEFAULT_CONTAINER_PREFIX = 'claw-master'
-DEFAULT_IMAGE = '1panel/openclaw:latest'
-DEFAULT_PORT = 18789
-HOST_DATA_DIR = os.path.expanduser('~/claw-master')
-
-
-def get_container_name(prefix, version=None):
-    """生成容器名称"""
-    if version:
-        return f"{prefix}-{version}"
-    return f"{prefix}-latest"
+DEFAULT_PORT = 38080
+HOST_IP = '10.10.1.100'
+DEFAULT_IMAGE = 'claw-master:latest'
 
 # 数据库配置
-DB_CONNECTION_STRING = 'postgresql://user_xKQftk:password_yP7FCG@postgresql:5432'
+DB_CONNECTION_STRING = 'postgresql://user_xKQftk:password_yP7FCG@postgresql:5432/claw-master'
 DB_CONFIG = {
     'host': 'postgresql',
     'port': '5432',
     'user': 'user_xKQftk',
     'password': 'password_yP7FCG',
-    'name': ''
+    'name': 'claw-master'
 }
+
+# 工作区路径
+SCRIPT_DIR = Path(__file__).parent
+WORKSPACE_DIR = SCRIPT_DIR.parent
+VERSION_FILE = WORKSPACE_DIR / 'VERSION'
+HOST_DATA_DIR = Path.home() / 'claw-master'
+
+
+# ============================================================================
+# 版本号管理
+# ============================================================================
+
+def read_version():
+    """从 VERSION 文件读取当前版本号"""
+    if not VERSION_FILE.exists():
+        return '0.0.0'
+    
+    content = VERSION_FILE.read_text()
+    for line in content.split('\n'):
+        if line.startswith('**当前版本：**'):
+            return line.split('**当前版本：**')[1].strip()
+    
+    return '0.0.0'
+
+
+def generate_container_name(version):
+    """生成容器名称：claw-master-<VERSION>"""
+    clean_version = version.replace(' ', '').replace('*', '')
+    return f"claw-master-{clean_version}"
+
+
+def generate_image_name(version):
+    """生成镜像名称：claw-master:<VERSION>"""
+    clean_version = version.replace(' ', '').replace('*', '')
+    return f"claw-master:{clean_version}"
 
 
 # ============================================================================
@@ -54,7 +89,7 @@ class Colors:
     GREEN = '\033[0;32m'
     YELLOW = '\033[1;33m'
     RED = '\033[0;31m'
-    NC = '\033[0m'  # No Color
+    NC = '\033[0m'
 
 
 def log_info(msg):
@@ -62,15 +97,15 @@ def log_info(msg):
 
 
 def log_success(msg):
-    print(f"{Colors.GREEN}[SUCCESS]{Colors.NC} {msg}")
+    print(f"{Colors.GREEN}[✓]{Colors.NC} {msg}")
 
 
 def log_warning(msg):
-    print(f"{Colors.YELLOW}[WARNING]{Colors.NC} {msg}")
+    print(f"{Colors.YELLOW}[!]{Colors.NC} {msg}")
 
 
 def log_error(msg):
-    print(f"{Colors.RED}[ERROR]{Colors.NC} {msg}")
+    print(f"{Colors.RED}[✗]{Colors.NC} {msg}")
 
 
 # ============================================================================
@@ -131,7 +166,7 @@ class DockerClient:
             result = self.get_json('/version')
             return result[1] == 200
         except Exception as e:
-            print(f"Connection check failed: {e}")
+            log_error(f"Docker 连接检查失败：{e}")
             return False
 
 
@@ -146,15 +181,14 @@ def create_host_directories(base_dir):
     log_info(f"创建持久化存储目录：{base_dir}")
     
     for subdir in subdirs:
-        path = os.path.join(base_dir, subdir)
-        os.makedirs(path, exist_ok=True)
+        path = base_dir / subdir
+        path.mkdir(parents=True, exist_ok=True)
     
     log_success(f"目录创建完成：{base_dir}/{{{','.join(subdirs)}}}")
 
 
 def get_container_info(client, container_name):
     """获取容器信息"""
-    # 先获取所有容器列表
     containers, status = client.get_json('/containers/json?all=true')
     
     for container in containers:
@@ -208,12 +242,10 @@ def pull_image(client, image_name):
     """拉取镜像"""
     log_info(f"拉取 Docker 镜像：{image_name}")
     
-    # 处理镜像名称
     image_for_url = image_name.replace(':', '%3A').replace('/', '%2F')
     
     result = client.request('POST', f'/images/create?fromImage={image_for_url}', timeout=300)
     
-    # 解析进度输出
     if result['body']:
         for line in result['body'].strip().split('\n'):
             if line:
@@ -241,7 +273,6 @@ def create_and_start_container(client, container_name, image_name, port, env_var
     """创建并启动容器"""
     log_info("创建并启动容器...")
     
-    # 构建容器配置
     config = {
         "name": container_name,
         "Image": image_name,
@@ -249,7 +280,7 @@ def create_and_start_container(client, container_name, image_name, port, env_var
         "HostConfig": {
             "Binds": volumes,
             "PortBindings": {
-                "18789/tcp": [
+                "80/tcp": [
                     {
                         "HostIp": "0.0.0.0",
                         "HostPort": str(port)
@@ -257,8 +288,7 @@ def create_and_start_container(client, container_name, image_name, port, env_var
                 ]
             },
             "RestartPolicy": {
-                "Name": "on-failure",
-                "MaximumRetryCount": 3
+                "Name": "unless-stopped",
             },
             "LogConfig": {
                 "Type": "json-file",
@@ -273,17 +303,15 @@ def create_and_start_container(client, container_name, image_name, port, env_var
         "OpenStdin": False
     }
     
-    # 创建容器
     result, status = client.post_json('/containers/create', config)
     
     if status != 201:
         log_error(f"创建容器失败：{result}")
         return None
     
-    container_id = result.get('Id', '')
+    container_id = result.get('Id', '')[:12]
     log_success(f"容器创建成功：{container_id[:12]}")
     
-    # 启动容器
     result = client.request('POST', f'/containers/{container_id}/start')
     
     if result['status'] in [200, 204]:
@@ -299,7 +327,7 @@ def verify_container(client, container_name, timeout=10):
     log_info("验证容器状态...")
     
     import time
-    time.sleep(3)  # 等待容器启动
+    time.sleep(3)
     
     container_info = get_container_info(client, container_name)
     
@@ -323,12 +351,13 @@ def load_extra_env(env_file):
     if not env_file:
         return env_vars
     
-    if not os.path.exists(env_file):
+    env_path = Path(env_file)
+    if not env_path.exists():
         log_warning(f"环境变量文件不存在：{env_file}")
         return env_vars
     
     try:
-        with open(env_file, 'r', encoding='utf-8') as f:
+        with open(env_path, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
@@ -347,17 +376,24 @@ def load_extra_env(env_file):
 def deploy(args):
     """执行部署"""
     
-    # 生成容器名称
-    container_name = get_container_name(DEFAULT_CONTAINER_PREFIX, args.version)
+    # 读取版本号
+    version = read_version()
+    
+    # 生成容器和镜像名称
+    container_name = generate_container_name(version)
+    image_name = args.image or generate_image_name(version)
     
     print()
     print("=" * 79)
-    print("  🚀 OpenClaw 部署脚本")
+    print("  🚀 claw-master 部署脚本")
     print("=" * 79)
     print()
-    print(f"  容器名称：{container_name}")
-    print(f"  镜像：    {args.image}")
-    print(f"  版本：    {args.version or 'latest'}")
+    print(f"  版本号：    {version}")
+    print(f"  容器名称：  {container_name}")
+    print(f"  镜像：      {image_name}")
+    print(f"  宿主机 IP:  {HOST_IP}")
+    print(f"  访问端口：  {args.port}")
+    print(f"  访问地址：  http://{HOST_IP}:{args.port}")
     print()
     
     # 初始化 Docker 客户端
@@ -392,7 +428,7 @@ def deploy(args):
     
     # 4. 拉取镜像
     if not args.skip_pull:
-        pull_image(client, args.image)
+        pull_image(client, image_name)
     
     # 5. 准备环境变量
     base_env_vars = [
@@ -421,7 +457,7 @@ def deploy(args):
     container_id = create_and_start_container(
         client, 
         container_name, 
-        args.image, 
+        image_name, 
         args.port,
         base_env_vars,
         volumes
@@ -441,11 +477,13 @@ def deploy(args):
     print("  ✅ 部署完成!")
     print("=" * 79)
     print()
-    print(f"  容器名称：    {container_name}")
-    print(f"  镜像：        {args.image}")
-    print(f"  访问端口：    {args.port}")
-    print(f"  数据库：      {DB_CONNECTION_STRING}")
-    print(f"  数据目录：    {HOST_DATA_DIR}")
+    print(f"  版本号：    {version}")
+    print(f"  容器名称：  {container_name}")
+    print(f"  镜像：      {image_name}")
+    print(f"  访问地址：  http://{HOST_IP}:{args.port}")
+    print(f"  登录账号：  admin / Admin@123")
+    print(f"  数据库：    {DB_CONNECTION_STRING}")
+    print(f"  数据目录：  {HOST_DATA_DIR}")
     print()
     print("  子目录结构:")
     print(f"    - {HOST_DATA_DIR}/data     (应用数据)")
@@ -466,29 +504,24 @@ def deploy(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='OpenClaw Docker 部署脚本',
+        description='claw-master Docker 部署脚本',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  %(prog)s                          # 使用默认配置部署
-  %(prog)s -i myimage:latest        # 指定镜像
-  %(prog)s -p 8080                  # 指定端口
+  %(prog)s                          # 使用当前版本部署
+  %(prog)s -i claw-master:0.4.0     # 指定镜像版本
+  %(prog)s -p 38080                 # 指定端口
   %(prog)s -r                       # 强制重建容器
-  %(prog)s -i myimage:latest -p 8080 -r  # 组合选项
+  %(prog)s -i claw-master:0.4.0 -p 38080 -r  # 组合选项
   %(prog)s -e .env.extra            # 加载额外环境变量
+  %(prog)s --skip-pull              # 跳过镜像拉取（使用本地镜像）
         """
     )
     
     parser.add_argument(
         '-i', '--image',
-        default=DEFAULT_IMAGE,
-        help=f'Docker 镜像名称 (默认：{DEFAULT_IMAGE})'
-    )
-    
-    parser.add_argument(
-        '-v', '--version',
-        metavar='VER',
-        help='版本号（用于生成容器名称，如：v1.0.0、2026.3.28）'
+        metavar='IMAGE',
+        help='Docker 镜像名称（默认：claw-master:<VERSION>）'
     )
     
     parser.add_argument(
