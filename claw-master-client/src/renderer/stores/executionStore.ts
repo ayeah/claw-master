@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { WSLInfo, SSHConnection, SSHTestResult, ExecutionResult, ExecutionLog } from '../features/execution/execution.types';
+import type { WSLInfo, SSHConnection, SSHTestResult, ExecutionResult, ExecutionLog } from '../types/execution';
 
 interface ExecutionState {
   wslAvailable: boolean;

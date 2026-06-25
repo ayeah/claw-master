@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { app } from 'electron';
-import { Memory, MemorySearchRequest, MemorySearchResult } from './skill.types';
+import { Memory, MemorySearchRequest, MemorySearchResult } from './memory.types';
 
 const MEMORY_FILE = 'memory.json';
 
@@ -103,7 +103,7 @@ export class MemoryService {
         // Word matching
         const queryWords = queryLower.split(/\s+/);
         const contentWords = contentLower.split(/\s+/);
-        const matchCount = queryWords.filter((w) => contentWords.some((cw) => cw.includes(w))).length;
+        const matchCount = queryWords.filter((w: string) => contentWords.some((cw: string) => cw.includes(w))).length;
         score = matchCount / queryWords.length;
       }
 

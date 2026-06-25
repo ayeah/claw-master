@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AgentProvider, Agent, AgentInvokeResponse } from '../features/agent/agent.types';
+import type { AgentProvider, Agent, AgentInvokeResponse } from '../types/agent';
 
 interface AgentState {
   providers: AgentProvider[];

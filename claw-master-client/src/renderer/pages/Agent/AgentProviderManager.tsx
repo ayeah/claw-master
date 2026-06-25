@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAgentStore } from '../../stores/agentStore'
-import { AgentProvider } from '../../features/agent/agent.types'
+import { AgentProvider } from '../../types/agent'
 import { Plus, Trash2, Save, X, RefreshCw } from 'lucide-react'
 
 export function AgentProviderManager() {
@@ -8,7 +8,7 @@ export function AgentProviderManager() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    type: 'openclaw' as 'openclaw' | 'hermes' | 'custom',
+    type: 'openclaw' as 'openclaw' | 'hermes' | 'qwenpaw' | 'opencode' | 'custom',
     baseUrl: '',
     apiKey: '',
     description: '',

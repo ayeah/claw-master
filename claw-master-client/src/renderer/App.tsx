@@ -5,13 +5,16 @@ import { SettingsPage } from './pages/Settings/SettingsPage'
 import { ExecutionPage } from './pages/Execution/ExecutionPage'
 import { AgentPage } from './pages/Agent/AgentPage'
 import { DockerPage } from './pages/Docker/DockerPage'
+import { MemoryPage } from './pages/Memory/MemoryPage'
+import { SkillPage } from './pages/Skill/SkillPage'
+import { FilePage } from './pages/File/FilePage'
 import { useChatStore } from './stores/chatStore'
 import { useProviderStore } from './stores/providerStore'
 import { useAgentStore } from './stores/agentStore'
 import { useExecutionStore } from './stores/executionStore'
-import { MessageSquare, Settings, Terminal, Bot, HardDrive, HelpCircle, X, ExternalLink, Github, Container } from 'lucide-react'
+import { MessageSquare, Settings, Terminal, Bot, HardDrive, HelpCircle, X, ExternalLink, Github, Container, Brain, Wand2, FolderOpen } from 'lucide-react'
 
-type Page = 'chat' | 'settings' | 'execution' | 'agent' | 'docker'
+type Page = 'chat' | 'settings' | 'execution' | 'agent' | 'docker' | 'memory' | 'skill' | 'file'
 
 interface NavItem {
   id: Page
@@ -22,6 +25,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'chat', icon: <MessageSquare className="h-5 w-5" />, label: '对话' },
   { id: 'agent', icon: <Bot className="h-5 w-5" />, label: 'Agent' },
+  { id: 'skill', icon: <Wand2 className="h-5 w-5" />, label: '技能' },
+  { id: 'memory', icon: <Brain className="h-5 w-5" />, label: '记忆' },
+  { id: 'file', icon: <FolderOpen className="h-5 w-5" />, label: '文件' },
   { id: 'execution', icon: <Terminal className="h-5 w-5" />, label: '终端' },
   { id: 'docker', icon: <Container className="h-5 w-5" />, label: 'Docker' },
   { id: 'settings', icon: <Settings className="h-5 w-5" />, label: '设置' },
@@ -33,15 +39,24 @@ function App(): JSX.Element {
   const [showAbout, setShowAbout] = useState(false)
   const fetchSessions = useChatStore((s) => s.fetchSessions)
   const fetchProviders = useProviderStore((s) => s.fetchProviders)
-  const { providers, agents, fetchAgents } = useAgentStore()
-  const { sshConnections, listSSHConnections } = useExecutionStore()
+  const { fetchAgents } = useAgentStore()
+  const { listSSHConnections } = useExecutionStore()
+
+  useEffect(() => {
+    const onNavigate = (event: Event) => {
+      const detail = (event as CustomEvent<{ page: Page }>).detail
+      if (detail?.page) setPage(detail.page)
+    }
+    window.addEventListener('claw:navigate', onNavigate)
+    return () => window.removeEventListener('claw:navigate', onNavigate)
+  }, [])
 
   useEffect(() => {
     fetchSessions()
     fetchProviders()
     fetchAgents()
     listSSHConnections()
-    
+
     try {
       const saved = localStorage.getItem('claw-preferences')
       if (saved) {
@@ -85,7 +100,7 @@ function App(): JSX.Element {
             </button>
           ))}
         </div>
-        
+
         <div className="relative">
           <button
             onClick={() => setShowHelpMenu(!showHelpMenu)}
@@ -95,7 +110,7 @@ function App(): JSX.Element {
             <HelpCircle className="h-5 w-5" />
             <span className="text-[9px] mt-0.5">帮助</span>
           </button>
-          
+
           {showHelpMenu && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowHelpMenu(false)} />
@@ -137,6 +152,9 @@ function App(): JSX.Element {
         {page === 'execution' && <ExecutionPage />}
         {page === 'agent' && <AgentPage />}
         {page === 'docker' && <DockerPage />}
+        {page === 'memory' && <MemoryPage />}
+        {page === 'skill' && <SkillPage />}
+        {page === 'file' && <FilePage />}
       </div>
 
       {showAbout && (
@@ -148,7 +166,7 @@ function App(): JSX.Element {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="rounded-xl bg-primary/10 p-3">
@@ -159,7 +177,7 @@ function App(): JSX.Element {
                   <p className="text-sm text-muted-foreground">打造你的 AI 军团，协同工作</p>
                 </div>
               </div>
-              
+
               <div className="rounded-lg bg-muted/50 p-4 space-y-3">
                 <h4 className="text-sm font-medium">功能简介</h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">
@@ -174,7 +192,7 @@ function App(): JSX.Element {
                   <p>4. 一个终端管理你所有的 Agent</p>
                 </div>
               </div>
-              
+
               <div className="rounded-lg bg-muted/50 p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">版本</span>
@@ -193,7 +211,7 @@ function App(): JSX.Element {
                   <span className="font-medium">20.18.3</span>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <a
                   href="https://github.com/ayeah/claw-master"
@@ -209,7 +227,7 @@ function App(): JSX.Element {
                   <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </a>
               </div>
-              
+
               <p className="text-xs text-center text-muted-foreground">
                 MIT License · Built with Electron + React + TypeScript
               </p>

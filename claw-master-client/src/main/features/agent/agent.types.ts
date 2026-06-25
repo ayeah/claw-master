@@ -1,7 +1,7 @@
 export interface AgentProvider {
   id: string;
   name: string;
-  type: 'openclaw' | 'hermes' | 'custom';
+  type: 'openclaw' | 'hermes' | 'qwenpaw' | 'opencode' | 'custom';
   baseUrl: string;
   apiKey?: string;
   enabled: boolean;

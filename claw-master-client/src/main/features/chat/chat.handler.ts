@@ -5,6 +5,8 @@ import * as providerService from '../provider/provider.service'
 import type { CreateSessionInput, UpdateSessionInput, SendMessageInput } from './chat.types'
 import OpenAI from 'openai'
 
+const cancelControllers = new Map<string, AbortController>()
+
 export function registerChatHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.SESSION_LIST, () => {
     return chatService.listSessions()
@@ -30,6 +32,15 @@ export function registerChatHandlers(): void {
     return chatService.listMessages(sessionId)
   })
 
+  ipcMain.handle(IPC_CHANNELS.CHAT_CANCEL, async (_, sessionId: string) => {
+    const ctrl = cancelControllers.get(sessionId)
+    if (ctrl) {
+      ctrl.abort()
+      cancelControllers.delete(sessionId)
+    }
+    return { cancelled: true }
+  })
+
   ipcMain.handle(
     IPC_CHANNELS.CHAT_SEND,
     async (event, sessionId: string, input: SendMessageInput) => {
@@ -53,22 +64,28 @@ export function registerChatHandlers(): void {
       const messages = chatService.listMessages(sessionId)
       const window = BrowserWindow.fromWebContents(event.sender)
 
+      const abortController = new AbortController()
+      cancelControllers.set(sessionId, abortController)
+
       try {
         const client = new OpenAI({
           apiKey: provider.apiKey,
           baseURL: provider.baseUrl,
           timeout: provider.config.timeout,
-          maxRetries: provider.config.maxRetries,
+          maxRetries: 0,
         })
 
-        const stream = await client.chat.completions.create({
-          model: session.modelId,
-          messages: messages.map((m) => ({
-            role: m.role as 'user' | 'assistant' | 'system',
-            content: m.content,
-          })),
-          stream: true,
-        })
+        const stream = await client.chat.completions.create(
+          {
+            model: session.modelId,
+            messages: messages.map((m) => ({
+              role: m.role as 'user' | 'assistant' | 'system',
+              content: m.content,
+            })),
+            stream: true,
+          },
+          { signal: abortController.signal }
+        )
 
         let fullContent = ''
 
@@ -85,6 +102,8 @@ export function registerChatHandlers(): void {
           }
         }
 
+        cancelControllers.delete(sessionId)
+
         const assistantMsg = chatService.addMessage(sessionId, 'assistant', fullContent)
 
         if (window && !window.isDestroyed()) {
@@ -95,16 +114,18 @@ export function registerChatHandlers(): void {
 
         return assistantMsg
       } catch (error: any) {
+        cancelControllers.delete(sessionId)
+        const cancelled = error?.name === 'APIUserAbortError' || abortController.signal.aborted
         const errorMsg = chatService.addMessage(
           sessionId,
           'assistant',
-          `请求失败: ${error.message}`
+          cancelled ? '[生成已取消]' : `请求失败: ${error.message || '未知错误'}`
         )
 
         if (window && !window.isDestroyed()) {
           window.webContents.send(IPC_CHANNELS.CHAT_STREAM, {
-            type: 'error',
-            error: error.message,
+            type: cancelled ? 'done' : 'error',
+            error: cancelled ? 'cancelled' : error.message,
           })
         }
 

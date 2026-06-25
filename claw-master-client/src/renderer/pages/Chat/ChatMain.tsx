@@ -122,7 +122,7 @@ export function ChatMain(): JSX.Element {
                 </div>
               </div>
               <button
-                onClick={() => window.location.hash = '#settings'}
+                onClick={() => window.dispatchEvent(new CustomEvent('claw:navigate', { detail: { page: 'settings' } }))}
                 className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 前往设置 - 添加模型商

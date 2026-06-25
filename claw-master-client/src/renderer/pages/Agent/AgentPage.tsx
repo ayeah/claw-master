@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAgentStore } from '../../stores/agentStore'
-import { AgentProvider, Agent } from '../../features/agent/agent.types'
+import { useProviderStore } from '../../stores/providerStore'
+import type { AgentProvider, Agent } from '../../types/agent'
 import { Bot, Plus, Trash2, Save, X, ChevronDown, ChevronRight, Settings, MessageSquare, Send, Plug, Loader2, ExternalLink, Download, Container, RefreshCw } from 'lucide-react'
 
 const PROVIDER_TYPES = [
@@ -51,8 +52,7 @@ export function AgentPage() {
   const handleTestProvider = async (providerId: string) => {
     setTestingProvider(providerId)
     try {
-      const providerStore = await import('../../stores/providerStore')
-      const result = await providerStore.useProviderStore.getState().testConnection(providerId)
+      const result = await useProviderStore.getState().testConnection(providerId)
       setTestResults(prev => ({ ...prev, [providerId]: result }))
     } catch (error) {
       setTestResults(prev => ({ ...prev, [providerId]: { success: false, latency: 0, error: error instanceof Error ? error.message : '测试失败' } }))
@@ -63,8 +63,7 @@ export function AgentPage() {
   const handleDiscoverModels = async (providerId: string) => {
     setDiscoveringModels(providerId)
     try {
-      const providerStore = await import('../../stores/providerStore')
-      await providerStore.useProviderStore.getState().fetchModels(providerId)
+      await useProviderStore.getState().fetchModels(providerId)
     } catch (error) {
       console.error('Failed to discover models:', error)
     }
@@ -76,11 +75,8 @@ export function AgentPage() {
     if (editingProviderId) {
       await updateProvider(editingProviderId, { ...providerForm, enabled: true, capabilities: ['chat'], config: {} })
     } else {
-      const newProvider = await createProvider({ ...providerForm, enabled: true, capabilities: ['chat'], config: {} })
-      if (newProvider) {
-        setTestResults({})
-        setDiscoveredModels({})
-      }
+      await createProvider({ ...providerForm, enabled: true, capabilities: ['chat'], config: {} })
+      setTestResults({})
     }
     setShowProviderForm(false)
     setEditingProviderId(null)

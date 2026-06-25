@@ -103,8 +103,11 @@ test-bot/reports/
 reports/
 *.report.md
 
-# Dev scripts
+# Dev scripts (root only)
 scripts/
+
+# Client build/version scripts are committed as part of the client
+!claw-master-client/scripts/
 
 # Environment templates
 .env.example
@@ -116,4 +119,9 @@ VERSION_CONFIG.toml
 # Root package.json is only for test-bot utilities
 /package.json
 /package-lock.json
+
+# But the client's package.json IS a deliverable
+!claw-master-client/package.json
+!claw-master-client/package-lock.json
+!claw-master-client/pnpm-lock.yaml
 

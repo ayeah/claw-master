@@ -71,6 +71,7 @@ export const IPC_CHANNELS = {
   FILE_READ: 'file:read',
   FILE_WRITE: 'file:write',
   FILE_LIST: 'file:list',
+  FILE_DELETE: 'file:delete',
 
   // Memory
   MEMORY_SEARCH: 'memory:search',

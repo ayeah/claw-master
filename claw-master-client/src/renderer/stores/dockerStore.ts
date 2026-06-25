@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DockerStatus, ContainerInfo } from '../features/docker/docker.service';
+import type { DockerStatus, ContainerInfo } from '../types/docker';
 
 interface DockerComposeConfig {
   version: string;

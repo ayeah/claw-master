@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useExecutionStore } from '../../stores/executionStore'
-import { SSHConnection } from '../../features/execution/execution.types'
+import { SSHConnection } from '../../types/execution'
 import { Plus, Trash2, Save, X } from 'lucide-react'
 
 export function SSHConnectionManager() {

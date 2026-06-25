@@ -12,7 +12,7 @@ import {
 } from 'fs';
 import { join, dirname, extname } from 'path';
 import { app } from 'electron';
-import { FileNode, FileOperation } from './skill.types';
+import { FileNode, FileOperation } from './file.types';
 
 export class FileService {
   private dataDir: string;

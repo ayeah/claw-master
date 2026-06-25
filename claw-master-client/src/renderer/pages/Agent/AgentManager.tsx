@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAgentStore } from '../../stores/agentStore'
-import { Agent, AgentCapability } from '../../features/agent/agent.types'
+import { Agent, AgentCapability } from '../../types/agent'
 import { Plus, Trash2, Save, X } from 'lucide-react'
 
 const CAPABILITIES: AgentCapability[] = ['chat', 'code', 'search', 'deploy', 'analyze', 'custom']

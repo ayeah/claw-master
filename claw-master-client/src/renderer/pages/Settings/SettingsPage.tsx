@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useProviderStore } from '../../stores/providerStore'
 import { useExecutionStore } from '../../stores/executionStore'
 import { useAgentStore } from '../../stores/agentStore'
-import { Plus, Trash2, Save, X, RefreshCw, Monitor, Cog, Plug, CheckCircle2, AlertCircle, ChevronRight, Server, Loader2, Bot, Eye, EyeOff, ChevronDown } from 'lucide-react'
-import type { Provider } from '../../shared/types'
-import type { SSHTestResult } from '../../features/execution/execution.types'
+import { Plus, Trash2, Save, X, RefreshCw, Monitor, Cog, Plug, CheckCircle2, AlertCircle, ChevronRight, Server, Loader2, Bot, Eye, EyeOff, ChevronDown, Download } from 'lucide-react'
+import type { Provider } from '../../../shared/types'
+import type { SSHTestResult } from '../../types/execution'
 
 type SettingsTab = 'models' | 'runtime' | 'preferences'
 
@@ -381,7 +381,7 @@ function WSLSSection(): JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [testingId, setTestingId] = useState<string | null>(null)
   const [testResults, setTestResults] = useState<Record<string, SSHTestResult>>({})
-  const [expandedError, setExpandedError] = useState<Record<string, string>>({})
+  const [expandedError, setExpandedError] = useState<Record<string, boolean>>({})
   const [detectedAgents, setDetectedAgents] = useState<Record<string, Array<{name: string; type: string; port?: number; status: string; path?: string}>>>({})
   const [detectingAgents, setDetectingAgents] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -751,7 +751,7 @@ function WSLSSection(): JSX.Element {
   )
 }
 
-function TestResultDisplay({ result, connId, expandedError, toggleError, onClose }: { result: SSHTestResult; connId: string; expandedError: Record<string, string>; toggleError: (connId: string, type: string) => void; onClose: () => void }): JSX.Element {
+function TestResultDisplay({ result, connId, expandedError, toggleError, onClose }: { result: SSHTestResult; connId: string; expandedError: Record<string, boolean>; toggleError: (connId: string, type: string) => void; onClose: () => void }): JSX.Element {
   const isExpanded = (type: string) => expandedError[`${connId}:${type}`]
   
   return (

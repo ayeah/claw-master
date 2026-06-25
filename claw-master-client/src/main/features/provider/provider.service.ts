@@ -15,17 +15,25 @@ export async function fetchModelsFromProvider(provider: Provider): Promise<Model
     const models = await client.models.list()
     
     return models.data
-      .filter(m => m.id && !m.id.startsWith('gpt-4-vision') && !m.id.startsWith('whisper'))
+      .filter(m => m.id && !m.id.startsWith('whisper'))
       .slice(0, 50)
-      .map((m) => ({
-        id: m.id,
-        name: m.id,
-        providerId: provider.id,
-        contextLength: m.context_window || 4096,
-        maxOutput: 4096,
-        supportTools: m.id.includes('gpt-4') || m.id.includes('gpt-3.5-turbo'),
-        supportVision: m.id.includes('vision') || m.id.includes('4o'),
-      }))
+      .map((m) => {
+        const id = m.id
+        const isGpt = id.includes('gpt-4') || id.includes('gpt-3.5')
+        return {
+          id,
+          name: id,
+          providerId: provider.id,
+          contextLength: isGpt && id.includes('gpt-4o') ? 128000
+            : isGpt && id.includes('gpt-4-turbo') ? 128000
+            : isGpt && id.includes('16k') ? 16384
+            : isGpt && id.includes('32k') ? 32768
+            : 4096,
+          maxOutput: 4096,
+          supportTools: isGpt,
+          supportVision: id.includes('vision') || id.includes('4o'),
+        }
+      })
   } catch (error: any) {
     console.error('Failed to fetch models:', error.message)
     return []
