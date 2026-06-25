@@ -65,3 +65,55 @@ venv/
 # Misc
 *.orig
 *.rej
+
+# --- Process files: only keep output deliverables ---
+# Development plans & internal docs
+DEV-PLAN.md
+DEV-PLAN*.md
+*开发计划*.md
+*开发文档*.md
+*需求文档*.md
+docs/
+
+# Dev guides / contribution notes
+CLAUDE.md
+CONTRIBUTING.md
+DESIGN.md
+
+# Test artifacts
+test-bot/
+test-bot/*
+tests/
+test/
+**/tests/
+**/test/
+*.test.ts
+*.test.tsx
+*.test.js
+*.test.py
+*.spec.ts
+*.spec.tsx
+*.spec.js
+*.spec.py
+__pycache__/
+.pytest_cache/
+
+# Reports
+test-bot/reports/
+reports/
+*.report.md
+
+# Dev scripts
+scripts/
+
+# Environment templates
+.env.example
+.env.template
+
+# Version manager config
+VERSION_CONFIG.toml
+
+# Root package.json is only for test-bot utilities
+/package.json
+/package-lock.json
+

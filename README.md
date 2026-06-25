@@ -1,10 +1,6 @@
 # Claw Master
 
 <p align="center">
-  <img src="build/icon.png" width="150" height="150" alt="Claw Master Logo" />
-</p>
-
-<p align="center">
   <a href="https://github.com/claw-master/claw-master/releases">
     <img src="https://img.shields.io/github/v/release/claw-master/claw-master" alt="Release" />
   </a>
@@ -12,150 +8,60 @@
   <img src="https://img.shields.io/github/contributors/claw-master/claw-master" alt="Contributors" />
 </p>
 
-> English | [简体中文](./README.zh-CN.md)
+## 简介
 
-## 概述
+Claw Master 是一款面向 **OPC（一人公司）** 的 **AI 军团控制台**，让个人创作者、独立开发者和自由职业者能够用一套工具统一调度多模型、多 Agent 与本地/云端资源。
 
-Claw Master 是一个面向 OPC（一人公司）的 **AI 军团控制台**，支持多模型商、多 Agent 协作、本地与云端双层架构。
+产品采用「本地核心 + 云端增值」双层架构：
 
-## 特性
+- **claw-master-client**：本地桌面客户端，所有核心对话、Agent 协作与执行能力都在本地运行。
+- **claw-master-server**：可选的云服务后端，提供跨设备同步、统一记忆库与远程访问能力。
 
-### 本地客户端（核心功能）
+## 功能特性
 
-- **多模型商支持**：OpenAI、Anthropic、Google、Azure、自定义 API
-- **多模型对话**：实时流式输出、会话管理、多会话并行
-- **多 Agent 协作**：支持本地/远程 Agent 切换、串行/并行/汇总模式
-- **执行能力**：WSL/SSH 远程执行、Docker 一键部署
-- **记忆系统**：会话记忆 + 长期记忆（向量库）
-- **技能系统**：可扩展的技能定义与执行
-- **文件管理**：项目文件夹、自动摘要、分片向量化
-- **跨平台**：Windows / macOS / Linux
+### 本地客户端
 
-### 服务器端（增值能力）
+- **多模型商支持**：OpenAI、Anthropic、Google、Azure 以及自定义 API。
+- **多模型对话**：实时流式输出、多会话并行、会话克隆与模型切换。
+- **多 Agent 协作**：本地/远程 Agent 自由切换，支持串行、并行与汇总模式。
+- **执行能力**：WSL/SSH 远程执行、Docker 一键部署。
+- **记忆系统**：会话短期记忆 + 长期向量记忆，支持可视化编辑。
+- **技能系统**：可扩展的 JSON Schema 技能定义与执行。
+- **文件管理**：项目文件夹、自动摘要、分片向量化。
+- **跨平台**：Windows / macOS / Linux。
 
-- **云端同步**：会话、配置、记忆跨设备同步
-- **统一记忆库**：Qdrant 向量存储、多设备共享
-- **远程访问**：手机远程触发任务、查看进度
-- **文件云盘**：MinIO 存储、版本管理、向量化索引
+### 服务端（可选）
+
+- **云端同步**：会话、配置、记忆跨设备同步。
+- **统一记忆库**：Qdrant 向量存储，多设备共享。
+- **远程访问**：手机远程触发任务、查看进度。
+- **文件云盘**：MinIO 存储、版本管理、向量化索引。
 
 ## 快速开始
 
-### 安装
+### 下载安装
 
-从 [Releases](https://github.com/claw-master/claw-master/releases) 下载对应平台的安装包。
+1. 前往 [Releases](https://github.com/claw-master/claw-master/releases) 页面。
+2. 下载对应平台的安装包。
+3. 安装并启动 Claw Master。
 
-### 开发
+### 首次使用
+
+1. 打开「设置」页面，添加你常用的模型商 API Key。
+2. 返回「对话」页面，选择模型并开始聊天。
+3. 在「Agent」页面配置或连接本地/远程 Agent，即可让多个 Agent 协同工作。
+
+### 服务端部署（可选）
+
+如需跨设备同步，可在服务器上部署 claw-master-server：
 
 ```bash
-# 克隆仓库
-git clone https://github.com/claw-master/claw-master.git
-cd claw-master
-
-# 安装客户端依赖
-cd claw-master-client
-npm install
-npm run dev
-
-# 安装服务端依赖（可选）
-cd ../claw-master-server
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+cd claw-master-server
+docker compose up -d
 ```
 
-## 项目结构
-
-```
-claw-master/
-├── claw-master-client/     # Electron 桌面客户端
-│   ├── src/
-│   │   ├── main/          # 主进程
-│   │   │   ├── features/  # 业务功能模块
-│   │   │   │   ├── provider/   # 模型商管理
-│   │   │   │   ├── chat/       # 对话引擎
-│   │   │   │   ├── agent/      # Agent 管理
-│   │   │   │   └── execution/  # 执行桥
-│   │   │   └── data/           # 数据层
-│   │   ├── renderer/          # React UI
-│   │   │   ├── pages/         # 页面组件
-│   │   │   ├── components/    # UI 组件
-│   │   │   └── stores/        # Zustand 状态
-│   │   └── shared/            # 共享类型
-│   ├── package.json
-│   └── electron.vite.config.ts
-│
-├── claw-master-server/    # FastAPI 后端服务
-│   ├── app/
-│   │   ├── api/          # REST API
-│   │   ├── models/       # SQLAlchemy 模型
-│   │   ├── schemas/      # Pydantic Schema
-│   │   └── services/     # 业务逻辑
-│   ├── pyproject.toml
-│   └── docker-compose.yml
-│
-└── docs/                  # 文档
-```
-
-## 文档
-
-### 开发指南
-
-| 文档 | 描述 |
-|------|------|
-| [CLAUDE.md](./claw-master-client/CLAUDE.md) | 开发者指南 — 开发规范、测试、Lint、提交约定 |
-| [CONTRIBUTING.md](./claw-master-client/CONTRIBUTING.md) | 贡献指南 — 如何贡献代码、PR 流程 |
-| [DESIGN.md](./claw-master-client/DESIGN.md) | 设计系统 — UI 设计规范、组件样式 |
-| [electron-builder.yml](./claw-master-client/electron-builder.yml) | 构建配置 — 打包配置（Windows/macOS/Linux） |
-
-### 相关文档
-
-- [DEV-PLAN.md](./DEV-PLAN.md) — 开发计划（内部策划）
-- [claw-master 开发文档（双层架构版）.md](./claw-master%20开发文档（双层架构版）.md) — 原始需求文档
-
-## 技术栈
-
-### 客户端
-
-| 模块 | 技术 |
-|------|------|
-| 桌面框架 | Electron + electron-vite |
-| UI | React 19 + Tailwind CSS + Shadcn UI |
-| 状态管理 | Zustand |
-| 数据库 | SQLite + Drizzle ORM |
-| AI 核心 | Vercel AI SDK |
-| 构建 | electron-builder |
-
-### 服务端
-
-| 模块 | 技术 |
-|------|------|
-| 框架 | FastAPI |
-| 数据库 | PostgreSQL + SQLAlchemy |
-| 向量库 | Qdrant |
-| 文件存储 | MinIO |
-
-## 路线图
-
-- [x] P0: 基础对话功能（模型商配置 + 多会话 + 流式输出）
-- [ ] P1: WSL/SSH 执行桥 + Docker 部署
-- [ ] P2: 多 Agent 协作 + Skill/记忆系统
-- [ ] P3: 服务端 MVP（认证 + 会话同步）
-- [ ] P4: 云端增强（统一记忆库 + 远程访问）
-
-## 贡献
-
-欢迎贡献代码！请阅读 [CONTRIBUTING.md](./claw-master-client/CONTRIBUTING.md) 了解贡献流程，[CLAUDE.md](./claw-master-client/CLAUDE.md) 了解开发规范。
+部署完成后，在客户端设置中填写服务端地址即可启用云端能力。
 
 ## 许可证
 
 MIT License - 详见 [LICENSE](LICENSE)
-
-## 相关项目
-
-- [cherry-studio](https://github.com/CherryHQ/cherry-studio) — AI 生产力工具，本项目的参考对象
-- [one-api](https://github.com/songquanpeng/one-api) — LLM API 管理与分发系统
-
----
-
-<p align="center">
-  用 <a href="https://github.com/claw-master/claw-master">⭐️</a> 支持我们
-</p>
