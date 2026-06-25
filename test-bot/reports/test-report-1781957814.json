@@ -1,0 +1,246 @@
+{
+  "title": "Claw Master 测试报告",
+  "generatedAt": "2026-06-20T20:16:54.755843",
+  "summary": {
+    "startTime": "2026-06-20T20:16:54.264373",
+    "endTime": "2026-06-20T20:16:54.755827",
+    "duration": 0.491454
+  },
+  "client": {
+    "passed": 42,
+    "failed": 0,
+    "tests": [
+      {
+        "name": "项目结构检查",
+        "status": "passed"
+      },
+      {
+        "name": "模型商 CRUD - 创建",
+        "status": "passed"
+      },
+      {
+        "name": "模型商 CRUD - 列表",
+        "status": "passed"
+      },
+      {
+        "name": "模型商 CRUD - 更新",
+        "status": "passed"
+      },
+      {
+        "name": "模型商 - 获取模型列表",
+        "status": "passed"
+      },
+      {
+        "name": "模型商 - 手动添加模型",
+        "status": "passed"
+      },
+      {
+        "name": "会话 - 创建",
+        "status": "passed"
+      },
+      {
+        "name": "会话 - 列表",
+        "status": "passed"
+      },
+      {
+        "name": "会话 - 更新模型",
+        "status": "passed"
+      },
+      {
+        "name": "会话 - 删除",
+        "status": "passed"
+      },
+      {
+        "name": "会话 - 克隆",
+        "status": "passed"
+      },
+      {
+        "name": "聊天 - 发送消息",
+        "status": "passed"
+      },
+      {
+        "name": "聊天 - 流式响应",
+        "status": "passed"
+      },
+      {
+        "name": "UI - 侧边栏组件",
+        "status": "passed"
+      },
+      {
+        "name": "UI - 主聊天界面",
+        "status": "passed"
+      },
+      {
+        "name": "UI - 设置页面",
+        "status": "passed"
+      },
+      {
+        "name": "状态管理 - Provider Store",
+        "status": "passed"
+      },
+      {
+        "name": "状态管理 - Chat Store",
+        "status": "passed"
+      },
+      {
+        "name": "IPC 通道配置",
+        "status": "passed"
+      },
+      {
+        "name": "预加载脚本",
+        "status": "passed"
+      },
+      {
+        "name": "执行 - WSL 服务",
+        "status": "passed"
+      },
+      {
+        "name": "执行 - SSH 服务",
+        "status": "passed"
+      },
+      {
+        "name": "执行 - IPC 通道",
+        "status": "passed"
+      },
+      {
+        "name": "执行 - UI 组件",
+        "status": "passed"
+      },
+      {
+        "name": "执行 - 状态管理",
+        "status": "passed"
+      },
+      {
+        "name": "Agent - 服务",
+        "status": "passed"
+      },
+      {
+        "name": "Agent - IPC 通道",
+        "status": "passed"
+      },
+      {
+        "name": "Agent - UI 组件",
+        "status": "passed"
+      },
+      {
+        "name": "Agent - 状态管理",
+        "status": "passed"
+      },
+      {
+        "name": "Docker - 服务",
+        "status": "passed"
+      },
+      {
+        "name": "Docker - IPC 通道",
+        "status": "passed"
+      },
+      {
+        "name": "Docker - UI 组件",
+        "status": "passed"
+      },
+      {
+        "name": "Skill - 服务",
+        "status": "passed"
+      },
+      {
+        "name": "Skill - IPC 通道",
+        "status": "passed"
+      },
+      {
+        "name": "Memory - 服务",
+        "status": "passed"
+      },
+      {
+        "name": "Memory - IPC 通道",
+        "status": "passed"
+      },
+      {
+        "name": "File - 服务",
+        "status": "passed"
+      },
+      {
+        "name": "File - IPC 通道",
+        "status": "passed"
+      },
+      {
+        "name": "UI - 导航栏",
+        "status": "passed"
+      },
+      {
+        "name": "UI - 页面切换",
+        "status": "passed"
+      },
+      {
+        "name": "UI - 模型切换",
+        "status": "passed"
+      },
+      {
+        "name": "UI - 响应式布局",
+        "status": "passed"
+      }
+    ]
+  },
+  "server": {
+    "passed": 13,
+    "failed": 0,
+    "tests": [
+      {
+        "name": "项目结构检查",
+        "status": "passed"
+      },
+      {
+        "name": "API - 健康检查",
+        "status": "passed"
+      },
+      {
+        "name": "API - 用户注册",
+        "status": "passed"
+      },
+      {
+        "name": "API - 用户登录",
+        "status": "passed"
+      },
+      {
+        "name": "API - 会话 CRUD",
+        "status": "passed"
+      },
+      {
+        "name": "API - 消息 CRUD",
+        "status": "passed"
+      },
+      {
+        "name": "API - 提供商同步",
+        "status": "passed"
+      },
+      {
+        "name": "API - 记忆管理",
+        "status": "passed"
+      },
+      {
+        "name": "API - 文件管理",
+        "status": "passed"
+      },
+      {
+        "name": "API - 远程访问",
+        "status": "passed"
+      },
+      {
+        "name": "数据库配置",
+        "status": "passed"
+      },
+      {
+        "name": "认证安全",
+        "status": "passed"
+      },
+      {
+        "name": "CORS 配置",
+        "status": "passed"
+      }
+    ]
+  },
+  "totals": {
+    "passed": 55,
+    "failed": 0,
+    "passRate": "100.0%"
+  }
+}

@@ -1,0 +1,54 @@
+[project]
+name = "claw-master-server"
+version = "2.3.0"
+description = "claw-master AI 军团控制台 - 服务器端"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "claw-master"},
+]
+
+dependencies = [
+    "fastapi>=0.115.6",
+    "uvicorn[standard]>=0.34.0",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "pydantic>=2.10.3",
+    "pydantic-settings>=2.7.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.18",
+    "httpx>=0.28.1",
+    "websockets>=14.1",
+    "qdrant-client>=1.12.1",
+    "minio>=7.2.15",
+    "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.1",
+    "ruff>=0.8.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "2.3.0"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry.scripts]
+version-current = "scripts.version_manager:main"
+version-build = "scripts.version_manager:main"

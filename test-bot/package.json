@@ -1,0 +1,24 @@
+{
+  "name": "test-bot",
+  "version": "0.1.0",
+  "description": "Claw Master 测试机器人 - 自动化测试套件",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node src/index.js",
+    "test:client": "node src/tests/client/run-tests.js",
+    "test:server": "node src/tests/server/run-tests.js"
+  },
+  "keywords": [
+    "test",
+    "automation",
+    "claw-master"
+  ],
+  "author": "claw-master",
+  "license": "MIT",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "playwright": "^1.61.0"
+  }
+}
